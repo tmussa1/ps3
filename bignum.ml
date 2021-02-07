@@ -7,10 +7,10 @@
 -- "bignums" -- for use in an implementation of the RSA public-key
 cryptographic system. As with the previous problem set, you may
 express your solution to a particular problem in terms of another
-function from a previous problem. Furthermore, you may use functions
-from the `List` module where appropriate. 
+function from a previous problem, and you may use functions from the
+`List` module where appropriate.
 
-Before starting on the problems set, read the problem set 3 writeup in
+Before starting on the problem set, read the problem set 3 writeup in
 the textbook. It provides context and crucial information for
 completing the problems. In addition, make sure that you are familiar
 with the problem set procedures in the document "Problem set
