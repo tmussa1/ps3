@@ -68,7 +68,7 @@ let rec comparison_helper (fn : int * int -> bool) (comp : bool * bool -> bool) 
   If left one is positive, it is always greater and vice versa
   If both are positive, the outcome will not change and will be the initial input
   *)
-let truth_table_greater (neg_big_num_1 : bool) (neg_big_num_2 : bool) (to_compare : bool): bool = 
+let truth_table (neg_big_num_1 : bool) (neg_big_num_2 : bool) (to_compare : bool): bool = 
   match neg_big_num_1, neg_big_num_2 with 
   | (true, true) -> not to_compare
   | (false, true) -> false
@@ -87,7 +87,7 @@ let less (b1 : bignum) (b2 : bignum) : bool =
     (fun (num1, num2) -> num1 < num2) 
     (fun (val1, val2) -> val1 || val2) 
     b1.coeffs b2.coeffs
-      in not (truth_table_greater b1.neg b2.neg result) ;;
+      in truth_table b1.neg b2.neg result ;;
 
 (* greater b1 b2 -- Predicate returns `true` if and only if `b1`
    represents a larger number than `b2`. *)
@@ -96,7 +96,7 @@ let greater (b1 : bignum) (b2 : bignum) : bool =
     (fun (num1, num2) -> num1 > num2) 
     (fun (val1, val2) -> val1 || val2) 
     b1.coeffs b2.coeffs
-      in truth_table_greater b1.neg b2.neg result ;;
+      in truth_table b1.neg b2.neg result ;;
 
 (*......................................................................
 Problem 3: Converting to and from bignums
@@ -108,7 +108,7 @@ let from_int (n : int) : bignum =
   let rec converter (n : int) : int list =
     if (n / cBASE) = 0 then n :: [] 
     else converter (n / cBASE)  @ [(n mod cBASE)] 
-  in {neg = n < 0; coeffs = converter n} ;;
+  in {neg = n < 0; coeffs = converter (abs(n))} ;;
      
 (* to_int b -- Returns `Some v`, where `v` is the `int` represented by
    the bignum `b`, if possible, or `None` if `b` represents an integer
@@ -117,11 +117,11 @@ let from_int (n : int) : bignum =
 let rec to_int_helper( lst : int list) : int option =
   let length_of_base = String.length (string_of_int cBASE) - 1 in
   let num_of_digits = (List.length lst) * length_of_base in
-  let maxDigits = 18 in
-  if num_of_digits > maxDigits then None 
+  let cMaxDigits = 18 in
+  if num_of_digits > cMaxDigits then None 
   else 
     match lst with
-    | [] -> None
+    | [] -> Some (0)
     | hd :: tl -> 
     let power =  float_of_int (List.length tl) in
     let base = float_of_int cBASE  in
@@ -134,7 +134,7 @@ let rec to_int_helper( lst : int list) : int option =
 let to_int (b : bignum) : int option =
   match to_int_helper b.coeffs with 
    | None -> None 
-   | Some x -> if b.neg then Some(~-x) else Some (x);;
+   | Some x -> if b.neg && x <> 0 then Some(~-x) else Some (x);;
 
 (*======================================================================
   Helpful functions (not to be used in problems 1 to 3)
@@ -302,9 +302,31 @@ Hint: How can you use `plus_pos` to implement `plus`? Make sure that
 your implementation preserves the bignum invariant.
 ......................................................................*)
 
+let rec complement (lst : int list) : int list =
+  match lst with
+  | [] -> []
+  | hd :: tl -> (cBASE - hd) :: complement tl ;;
+
+let rec mod_cbase (lst : int list) : int list =
+   match lst with
+   | [] -> []
+   | hd :: tl -> if hd = 1 then mod_cbase tl else hd :: mod_cbase tl;;
+
 (* plus b1 b2 -- Returns the bignum sum of `b1` and `b2` *)
 let plus (b1 : bignum) (b2 : bignum) : bignum =
-  failwith "plus not implemented" ;;
+  let make_positive (lst: int list) : bignum = {neg = false; coeffs = lst} in
+  match b1.neg, b2.neg with
+  | (true, true) | (false, false) ->  
+    let result = plus_pos (make_positive b1.coeffs) (make_positive b2.coeffs)
+    in {neg = b1.neg; coeffs = result.coeffs}
+  | (true, false) | (false, true)  -> 
+    let result_opposite_signs = 
+    if less (make_positive b1.coeffs) (make_positive b2.coeffs) 
+      then plus_pos (make_positive (complement b1.coeffs)) (make_positive b2.coeffs)
+    else plus_pos (make_positive b1.coeffs) (make_positive (complement b2.coeffs)) 
+  in {neg = (less (make_positive b1.coeffs) (make_positive b2.coeffs) && not b1.neg) ||
+            (greater (make_positive b1.coeffs) (make_positive b2.coeffs) && b1.neg) ; 
+     coeffs = List.rev (mod_cbase (List.rev result_opposite_signs.coeffs))};;
 
 (*......................................................................
 Problem 5

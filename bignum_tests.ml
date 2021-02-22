@@ -42,24 +42,24 @@ open Absbook ;;
    unit_test ((comparison_helper (fun (num1, num2) -> num1 < num2) (fun (x, y) -> x || y) [1; 2] [1; 3]) = true)
              "comparison_helper one list less than the other checking if it is indeed less";;
 
-let truth_table_greater_test () = 
-   unit_test (truth_table_greater true true false = true)
+let truth_table_test () = 
+   unit_test (truth_table true true false = true)
             "truth_table_greater when both neg values are true and comparing with false";
-   unit_test (truth_table_greater true true true = false)
+   unit_test (truth_table true true true = false)
             "truth_table_greater when both neg values are true and comparing with true";
-   unit_test (truth_table_greater false true false = false)
+   unit_test (truth_table false true false = false)
             "truth_table_greater (false, true)";
-   unit_test (truth_table_greater true false true = true)
+   unit_test (truth_table true false true = true)
             "truth_table_greater (true, false)";
-   unit_test (truth_table_greater false false false = false)
+   unit_test (truth_table false false false = false)
             "truth_table_greater when both neg values are false and comparing with false";
-   unit_test (truth_table_greater false false true = true)
+   unit_test (truth_table false false true = true)
             "truth_table_greater when both neg values are true and comparing with true";;
  
  let test_all () =
    negate_test (),
    comparison_helper_test (),
-   truth_table_greater_test ()
+   truth_table_test ()
    ;;
  
  let _ = test_all () ;;
