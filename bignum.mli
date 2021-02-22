@@ -15,6 +15,7 @@ val less : bignum -> bignum -> bool
 val greater : bignum -> bignum -> bool
 val from_int : int -> bignum
 val to_int : bignum -> int option
+val comparison_helper : (int * int -> bool) -> (bool * bool -> bool) -> int list ->  int list -> bool
 
 val trim_leading_zeroes : int list -> int list
 val clean : bignum -> bignum
