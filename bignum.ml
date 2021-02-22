@@ -67,12 +67,31 @@ Problem 3: Converting to and from bignums
 ......................................................................*)
 
 (* from_int n -- Returns a bignum representing the integer `n`. *)
+
 let from_int (n : int) : bignum =
-  failwith "from_int not implemented" ;;
+  let rec converter (n : int) : int list =
+    if (n / cBASE) = 0 then n :: [] 
+    else converter (n / cBASE)  @ [(n mod cBASE)] 
+  in {neg = n < 0; coeffs = converter n} ;;
      
 (* to_int b -- Returns `Some v`, where `v` is the `int` represented by
    the bignum `b`, if possible, or `None` if `b` represents an integer
    out of the representable range of the `int` type. *)
+
+let rec to_int_helper(lst : int list) : int option =
+  match lst with
+  | [] -> None
+  | hd :: tl -> Some (hd * int_of_float (float_of_int cBASE ** float_of_int (List.length tl))) ;;
+
+  let rec to_int_helper( lst : int list) : int option =
+    match lst with
+    | [] -> None
+    | hd :: tl -> 
+     match to_int_helper tl with
+     | None -> None
+     | Some htl -> Some ( hd *  int_of_float (float_of_int cBASE ** float_of_int (List.length tl))) ;;
+
+
 let to_int (b : bignum) : int option =
   failwith "to_int not implemented" ;;
 
