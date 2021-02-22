@@ -68,12 +68,19 @@ let rec comparison_helper (fn : int * int -> bool) (comp : bool * bool -> bool) 
   If left one is positive, it is always greater and vice versa
   If both are positive, the outcome will not change and will be the initial input
   *)
-let truth_table (neg_big_num_1 : bool) (neg_big_num_2 : bool) (to_compare : bool): bool = 
+let truth_table_greater (neg_big_num_1 : bool) (neg_big_num_2 : bool) (to_compare : bool): bool = 
   match neg_big_num_1, neg_big_num_2 with 
   | (true, true) -> not to_compare
-  | (false, true) -> false
-  | (true, false) -> true
+  | (false, true) -> true
+  | (true, false) -> false
   | (false, false) -> to_compare ;;
+
+let truth_table_less (neg_big_num_1 : bool) (neg_big_num_2 : bool) (to_compare : bool): bool = 
+    match neg_big_num_1, neg_big_num_2 with 
+    | (true, true) -> not to_compare
+    | (false, true) -> false
+    | (true, false) -> true
+    | (false, false) -> to_compare ;;
 
 
 let equal (b1 : bignum) (b2 : bignum) : bool =
@@ -87,7 +94,7 @@ let less (b1 : bignum) (b2 : bignum) : bool =
     (fun (num1, num2) -> num1 < num2) 
     (fun (val1, val2) -> val1 || val2) 
     b1.coeffs b2.coeffs
-      in truth_table b1.neg b2.neg result ;;
+      in truth_table_less b1.neg b2.neg result ;;
 
 (* greater b1 b2 -- Predicate returns `true` if and only if `b1`
    represents a larger number than `b2`. *)
@@ -96,7 +103,7 @@ let greater (b1 : bignum) (b2 : bignum) : bool =
     (fun (num1, num2) -> num1 > num2) 
     (fun (val1, val2) -> val1 || val2) 
     b1.coeffs b2.coeffs
-      in truth_table b1.neg b2.neg result ;;
+      in truth_table_greater b1.neg b2.neg result ;;
 
 (*......................................................................
 Problem 3: Converting to and from bignums
@@ -310,7 +317,10 @@ let rec complement (lst : int list) : int list =
 let rec mod_cbase (lst : int list) : int list =
    match lst with
    | [] -> []
-   | hd :: tl -> if hd = 1 then mod_cbase tl else hd :: mod_cbase tl;;
+   | hd :: tl -> 
+   if hd = 1 then mod_cbase tl 
+   else if List.length tl > 0 then (hd - 1) :: mod_cbase tl
+   else hd :: mod_cbase tl;;
 
 (* plus b1 b2 -- Returns the bignum sum of `b1` and `b2` *)
 let plus (b1 : bignum) (b2 : bignum) : bignum =
@@ -321,12 +331,12 @@ let plus (b1 : bignum) (b2 : bignum) : bignum =
     in {neg = b1.neg; coeffs = result.coeffs}
   | (true, false) | (false, true)  -> 
     let result_opposite_signs = 
-    if less (make_positive b1.coeffs) (make_positive b2.coeffs) 
-      then plus_pos (make_positive (complement b1.coeffs)) (make_positive b2.coeffs)
-    else plus_pos (make_positive b1.coeffs) (make_positive (complement b2.coeffs)) 
-  in {neg = (less (make_positive b1.coeffs) (make_positive b2.coeffs) && not b1.neg) ||
+    if greater (make_positive b1.coeffs) (make_positive b2.coeffs)
+      then plus_pos (make_positive  b1.coeffs) (make_positive (complement b2.coeffs))
+    else plus_pos (make_positive (complement b1.coeffs)) (make_positive b2.coeffs)
+      in {neg = (less (make_positive b1.coeffs) (make_positive b2.coeffs) && not b1.neg) ||
             (greater (make_positive b1.coeffs) (make_positive b2.coeffs) && b1.neg) ; 
-     coeffs = List.rev (mod_cbase (List.rev result_opposite_signs.coeffs))};;
+      coeffs = List.rev (List.rev (mod_cbase result_opposite_signs.coeffs))};;
 
 (*......................................................................
 Problem 5
