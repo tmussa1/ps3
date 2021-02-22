@@ -41,7 +41,7 @@ Problem 1: Negation
 
 (* negate b -- Returns a `bignum` that is the negation of `b`. *) 
 let negate (b : bignum) : bignum =
-  failwith "negate not implemented" ;;
+  {neg = not b.neg ; coeffs = b.coeffs} ;;
 
 (*......................................................................
 Problem 2: Comparing bignums
@@ -49,18 +49,53 @@ Problem 2: Comparing bignums
   
 (* equal b1 b2 -- Predicate returns `true` if and only if `b1` and
    `b2` represent the same number. *)
+
+(** Utility function common to all kinds of comparisons
+    Can be used to tests if two lists are equal, less or greater than each other
+    If a list is empty, it will have a zero value and the comparison will be based on that
+    The comparison can be a conjunction to test for equality and a disjunction to test if two lists differ
+*)
+let rec comparison_helper (fn : int * int -> bool) (comp : bool * bool -> bool) (l1 : int list) (l2 : int list) : bool =
+  match l1, l2 with
+  | [] , [] -> true
+  | hd :: _, [] -> (fn (hd, 0))
+  | [] ,  hd :: _ -> (fn (0, hd))
+  | hd1 :: tl1, hd2 :: tl2 -> 
+    comp (fn (hd1, hd2), (comparison_helper fn comp tl1 tl2)) ;; 
+
+(** Compares two numbers. 
+  If they are both negative, it reverses the comparison
+  If left one is positive, it is always greater and vice versa
+  If both are positive, the outcome will not change and will be the initial input
+  *)
+let truth_table_greater (neg_big_num_1 : bool) (neg_big_num_2 : bool) (to_compare : bool): bool = 
+  match neg_big_num_1, neg_big_num_2 with 
+  | (true, true) -> not to_compare
+  | (false, true) -> false
+  | (true, false) -> true
+  | (false, false) -> to_compare ;;
+
 let equal (b1 : bignum) (b2 : bignum) : bool =
-  failwith "equal not implemented" ;;
+  b1.neg = b2.neg && comparison_helper (fun (num1, num2) -> num1 = num2) 
+  (fun (val1, val2) -> val1 && val2) b1.coeffs b2.coeffs;;
 
 (* less b1 b2 -- Predicate returns `true` if and only if `b1`
    represents a smaller number than `b2`. *)
 let less (b1 : bignum) (b2 : bignum) : bool =
-  failwith "less not implemented" ;;
+  let result = comparison_helper 
+    (fun (num1, num2) -> num1 < num2) 
+    (fun (val1, val2) -> val1 || val2) 
+    b1.coeffs b2.coeffs
+      in not (truth_table_greater b1.neg b2.neg result) ;;
 
 (* greater b1 b2 -- Predicate returns `true` if and only if `b1`
    represents a larger number than `b2`. *)
 let greater (b1 : bignum) (b2 : bignum) : bool =
-  failwith "greater not implemented" ;;
+  let result = comparison_helper 
+    (fun (num1, num2) -> num1 > num2) 
+    (fun (val1, val2) -> val1 || val2) 
+    b1.coeffs b2.coeffs
+      in truth_table_greater b1.neg b2.neg result ;;
 
 (*......................................................................
 Problem 3: Converting to and from bignums
@@ -78,22 +113,27 @@ let from_int (n : int) : bignum =
    the bignum `b`, if possible, or `None` if `b` represents an integer
    out of the representable range of the `int` type. *)
 
-let rec to_int_helper(lst : int list) : int option =
-  match lst with
-  | [] -> None
-  | hd :: tl -> Some (hd * int_of_float (float_of_int cBASE ** float_of_int (List.length tl))) ;;
-
-  let rec to_int_helper( lst : int list) : int option =
+let rec to_int_helper( lst : int list) : int option =
+  let length_of_base = String.length (string_of_int cBASE) - 1 in
+  let num_of_digits = (List.length lst) * length_of_base in
+  let maxDigits = 18 in
+  if num_of_digits > maxDigits then None 
+  else 
     match lst with
     | [] -> None
     | hd :: tl -> 
-     match to_int_helper tl with
-     | None -> None
-     | Some htl -> Some ( hd *  int_of_float (float_of_int cBASE ** float_of_int (List.length tl))) ;;
+    let power =  float_of_int (List.length tl) in
+    let base = float_of_int cBASE  in
+    let multiple = hd * int_of_float (base ** power) in 
+      match to_int_helper tl with
+      | None -> Some (multiple)
+      | Some x -> Some (x + multiple) ;;
 
 
 let to_int (b : bignum) : int option =
-  failwith "to_int not implemented" ;;
+  match to_int_helper b.coeffs with 
+   | None -> None 
+   | Some x -> if b.neg then Some(~-x) else Some (x);;
 
 (*======================================================================
   Helpful functions (not to be used in problems 1 to 3)
