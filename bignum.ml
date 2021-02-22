@@ -57,7 +57,7 @@ Problem 2: Comparing bignums
 *)
 let rec comparison_helper (fn : int * int -> bool) (comp : bool * bool -> bool) (l1 : int list) (l2 : int list) : bool =
   match l1, l2 with
-  | [] , [] -> true
+  | [] , [] -> (fn (0, 0))
   | hd :: _, [] -> (fn (hd, 0))
   | [] ,  hd :: _ -> (fn (0, hd))
   | hd1 :: tl1, hd2 :: tl2 -> 
@@ -74,6 +74,7 @@ let truth_table_greater (neg_big_num_1 : bool) (neg_big_num_2 : bool) (to_compar
   | (false, true) -> false
   | (true, false) -> true
   | (false, false) -> to_compare ;;
+
 
 let equal (b1 : bignum) (b2 : bignum) : bool =
   b1.neg = b2.neg && comparison_helper (fun (num1, num2) -> num1 = num2) 
