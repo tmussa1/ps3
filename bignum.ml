@@ -40,8 +40,7 @@ Problem 1: Negation
 ......................................................................*)
 
 (* negate b -- Returns a `bignum` that is the negation of `b`. *) 
-let negate (b : bignum) : bignum =
-  {neg = not b.neg ; coeffs = b.coeffs} ;;
+let negate (b : bignum) : bignum = {neg = not b.neg; coeffs = b.coeffs} ;;
 
 (*......................................................................
 Problem 2: Comparing bignums
@@ -55,55 +54,32 @@ Problem 2: Comparing bignums
     If a list is empty, it will have a zero value and the comparison will be based on that
     The comparison can be a conjunction to test for equality and a disjunction to test if two lists differ
 *)
-let rec comparison_helper (fn : int * int -> bool) (comp : bool * bool -> bool) (l1 : int list) (l2 : int list) : bool =
-  match l1, l2 with
-  | [] , [] -> (fn (0, 0))
-  | hd :: _, [] -> (fn (hd, 0))
-  | [] ,  hd :: _ -> (fn (0, hd))
-  | hd1 :: tl1, hd2 :: tl2 -> 
-    comp (fn (hd1, hd2), (comparison_helper fn comp tl1 tl2)) ;; 
 
-(** Compares two numbers. 
-  If they are both negative, it reverses the comparison
-  If left one is positive, it is always greater and vice versa
-  If both are positive, the outcome will not change and will be the initial input
-  *)
-let truth_table_greater (neg_big_num_1 : bool) (neg_big_num_2 : bool) (to_compare : bool): bool = 
-  match neg_big_num_1, neg_big_num_2 with 
-  | (true, true) -> not to_compare
-  | (false, true) -> true
-  | (true, false) -> false
-  | (false, false) -> to_compare ;;
-
-let truth_table_less (neg_big_num_1 : bool) (neg_big_num_2 : bool) (to_compare : bool): bool = 
-    match neg_big_num_1, neg_big_num_2 with 
-    | (true, true) -> not to_compare
-    | (false, true) -> false
-    | (true, false) -> true
-    | (false, false) -> to_compare ;;
-
-
-let equal (b1 : bignum) (b2 : bignum) : bool =
-  b1.neg = b2.neg && comparison_helper (fun (num1, num2) -> num1 = num2) 
-  (fun (val1, val2) -> val1 && val2) b1.coeffs b2.coeffs;;
+let equal (b1 : bignum) (b2 : bignum) : bool = b1 = b2 ;;
 
 (* less b1 b2 -- Predicate returns `true` if and only if `b1`
    represents a smaller number than `b2`. *)
 let less (b1 : bignum) (b2 : bignum) : bool =
-  let result = comparison_helper 
-    (fun (num1, num2) -> num1 < num2) 
-    (fun (val1, val2) -> val1 || val2) 
-    b1.coeffs b2.coeffs
-      in truth_table_less b1.neg b2.neg result ;;
+  if (equal b1 b2) || (not b1.neg && b2.neg) then false
+  else if 
+    (b1.neg && not b2.neg) 
+    || (b1.neg && (List.length b1.coeffs > List.length b2.coeffs)) 
+    || (not b1.neg && (List.length b1.coeffs < List.length b2.coeffs)) then true
+  else 
+    let rec less_rec (lst1 : int list) (lst2 : int list) : bool = 
+      match lst1, lst2 with
+        | [], [] | _ , [] -> false
+        | [], _ -> true 
+        | hd1 :: tl1, hd2 :: tl2 -> 
+          if hd1 = hd2 then less_rec tl1 tl2 
+          else if hd1 < hd2 then true
+          else false
+    in less_rec b1.coeffs b2.coeffs;;
 
 (* greater b1 b2 -- Predicate returns `true` if and only if `b1`
    represents a larger number than `b2`. *)
-let greater (b1 : bignum) (b2 : bignum) : bool =
-  let result = comparison_helper 
-    (fun (num1, num2) -> num1 > num2) 
-    (fun (val1, val2) -> val1 || val2) 
-    b1.coeffs b2.coeffs
-      in truth_table_greater b1.neg b2.neg result ;;
+let greater (b1 : bignum) (b2 : bignum) : bool = 
+  not (equal b1 b2) && not (less b1 b2);;
 
 (*......................................................................
 Problem 3: Converting to and from bignums
@@ -115,33 +91,28 @@ let from_int (n : int) : bignum =
   let rec converter (n : int) : int list =
     if (n / cBASE) = 0 then n :: [] 
     else converter (n / cBASE)  @ [(n mod cBASE)] 
-  in {neg = n < 0; coeffs = converter (abs(n))} ;;
+  in 
+  {neg = n < 0; coeffs = converter (abs(n))} ;;
      
 (* to_int b -- Returns `Some v`, where `v` is the `int` represented by
    the bignum `b`, if possible, or `None` if `b` represents an integer
    out of the representable range of the `int` type. *)
 
-let rec to_int_helper( lst : int list) : int option =
-  let length_of_base = String.length (string_of_int cBASE) - 1 in
-  let num_of_digits = (List.length lst) * length_of_base in
-  let cMaxDigits = 18 in
-  if num_of_digits > cMaxDigits then None 
-  else 
-    match lst with
-    | [] -> Some (0)
-    | hd :: tl -> 
-    let power =  float_of_int (List.length tl) in
-    let base = float_of_int cBASE  in
-    let multiple = hd * int_of_float (base ** power) in 
-      match to_int_helper tl with
-      | None -> Some (multiple)
-      | Some x -> Some (x + multiple) ;;
-
-
 let to_int (b : bignum) : int option =
-  match to_int_helper b.coeffs with 
-   | None -> None 
-   | Some x -> if b.neg && x <> 0 then Some(~-x) else Some (x);;
+  let overflow = 
+    greater b (from_int (abs (min_int + 1)))
+    || less b (from_int min_int) 
+  in
+  if overflow then None
+  else 
+    let bignum_sum (lst : int list) : int =  
+      List.fold_left (fun a b -> a * cBASE + b) 0 lst
+    in
+    Some (bignum_sum b.coeffs) ;;
+(*     
+    match to_int_helper b.coeffs with 
+      | None -> None 
+      | Some x -> if b.neg && x <> 0 then Some(~-x) else Some (x);; *)
 
 (*======================================================================
   Helpful functions (not to be used in problems 1 to 3)
@@ -309,34 +280,15 @@ Hint: How can you use `plus_pos` to implement `plus`? Make sure that
 your implementation preserves the bignum invariant.
 ......................................................................*)
 
-let rec complement (lst : int list) : int list =
-  match lst with
-  | [] -> []
-  | hd :: tl -> (cBASE - hd) :: complement tl ;;
-
-let rec mod_cbase (lst : int list) : int list =
-   match lst with
-   | [] -> []
-   | hd :: tl -> 
-   if hd = 1 then mod_cbase tl 
-   else if List.length tl > 0 then (hd - 1) :: mod_cbase tl
-   else hd :: mod_cbase tl;;
-
-(* plus b1 b2 -- Returns the bignum sum of `b1` and `b2` *)
 let plus (b1 : bignum) (b2 : bignum) : bignum =
-  let make_positive (lst: int list) : bignum = {neg = false; coeffs = lst} in
-  match b1.neg, b2.neg with
-  | (true, true) | (false, false) ->  
-    let result = plus_pos (make_positive b1.coeffs) (make_positive b2.coeffs)
-    in {neg = b1.neg; coeffs = result.coeffs}
-  | (true, false) | (false, true)  -> 
-    let result_opposite_signs = 
-    if greater (make_positive b1.coeffs) (make_positive b2.coeffs)
-      then plus_pos (make_positive  b1.coeffs) (make_positive (complement b2.coeffs))
-    else plus_pos (make_positive (complement b1.coeffs)) (make_positive b2.coeffs)
-      in {neg = (less (make_positive b1.coeffs) (make_positive b2.coeffs) && not b1.neg) ||
-            (greater (make_positive b1.coeffs) (make_positive b2.coeffs) && b1.neg) ; 
-      coeffs = List.rev (List.rev (mod_cbase result_opposite_signs.coeffs))};;
+  let sum_negative = 
+    (greater b1 b2 && b1.neg) 
+    || (greater b2 b1 && b2.neg) 
+    || (b1.neg && b2.neg) 
+  in 
+  if sum_negative then plus_pos (negate b1) (negate b2) |> negate
+  else plus_pos b1 b2 
+;;
 
 (*......................................................................
 Problem 5
