@@ -349,8 +349,10 @@ Challenge Problem 6: Faster bignum multiplication
 (* times_faster b1 b2 -- Returns a bignum representing the product of
    `b1` and `b2`, making use of the Karatsuba algorithm for
    multiplication. *)
+
+(* Not implemented this. Just made the compilation error go away *)
 let times_faster (b1 : bignum) (b2 : bignum) : bignum =
-  failwith "times_faster not implemented" ;;
+  times b1 b2 ;;
 
 (*======================================================================
 Reflection on the problem set
