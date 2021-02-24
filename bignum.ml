@@ -319,28 +319,26 @@ simplifies the code, as long as the invariant is preserved.
 (* times b1 b2 -- Returns the bignum product of `b1` and `b2` *)
 
 let times (b1 : bignum) (b2 : bignum) : bignum =
-  let rec add_zeros (num : int) (power : int) : int =
-    if power = 0 then num 
-    else cBASE * (add_zeros num (power - 1)) 
+  let rec add_zeros (num : int) (power : int) : string =
+    if power = 0 then string_of_int num 
+    else add_zeros num (power - 1) ^ "0" 
   in
-  let rec convert_to_bignum (lst : int list) : bignum list =
+  let rec multiply_each (lst : int list) (element : int): string list = 
     match lst with
     | [] -> []
-    | hd :: tl -> (from_int hd) :: (convert_to_bignum tl)
-  in
-  let rec multiply_each (lst : int list) (element : int): int list = 
-    match lst with
-    | [] -> []
-    | hd :: [] -> [hd * element]
+    | hd :: [] -> [add_zeros (hd * element) 0]
     | hd :: tl -> 
-      add_zeros (hd * element) (List.length tl) :: multiply_each tl element
+      add_zeros (hd * element) (intlog cBASE * List.length tl) :: multiply_each tl element
   in 
-  let product = List.flatten(List.map (fun x ->  multiply_each b1.coeffs x) b2.coeffs) 
+  let product = List.flatten (List.map (fun x -> multiply_each b1.coeffs x) b2.coeffs)
+  in 
+  let lst : bignum list = List.map (fun str -> from_string str) product 
   in
-  let result = List.fold_left (fun x y -> plus x y) {neg = false; coeffs = []} (convert_to_bignum product) 
+  let result = List.fold_left (fun x y -> plus x y) {neg = false; coeffs = []} lst
   in 
-    {neg = ( <> ) b1.neg b2.neg; coeffs = result.coeffs} 
+  {neg = ( <> ) b1.neg b2.neg; coeffs = result.coeffs} 
 ;;
+
 
 (*======================================================================
 Challenge Problem 6: Faster bignum multiplication 
