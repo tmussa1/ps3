@@ -74,12 +74,12 @@ let less (b1 : bignum) (b2 : bignum) : bool =
           if hd1 = hd2 then less_rec tl1 tl2 
           else if hd1 < hd2 then true
           else false
-    in less_rec b1.coeffs b2.coeffs;;
+    in less_rec b1.coeffs b2.coeffs ;;
 
 (* greater b1 b2 -- Predicate returns `true` if and only if `b1`
    represents a larger number than `b2`. *)
 let greater (b1 : bignum) (b2 : bignum) : bool = 
-  not (equal b1 b2) && not (less b1 b2);;
+  not (equal b1 b2) && not (less b1 b2) ;;
 
 (*......................................................................
 Problem 3: Converting to and from bignums
@@ -105,10 +105,7 @@ let to_int (b : bignum) : int option =
   in
   if overflow then None
   else 
-    let bignum_sum (lst : int list) : int =  
-      List.fold_left (fun a b -> a * cBASE + b) 0 lst
-    in
-    Some (bignum_sum b.coeffs) ;;
+    Some (List.fold_left (fun x y -> x * cBASE + y) 0 b.coeffs) ;;
 (*     
     match to_int_helper b.coeffs with 
       | None -> None 
@@ -320,8 +317,30 @@ simplifies the code, as long as the invariant is preserved.
 ......................................................................*)
 
 (* times b1 b2 -- Returns the bignum product of `b1` and `b2` *)
+
 let times (b1 : bignum) (b2 : bignum) : bignum =
-  failwith "times not implemented" ;;
+  let raise_to_power (power : int) : int = 
+    int_of_float (float_of_int cBASE ** float_of_int power) 
+  in
+  let rec convert_to_bignum (lst : int list) : bignum list =
+    match lst with
+    | [] -> []
+    | hd :: tl -> (from_int hd) :: (convert_to_bignum tl)
+  in
+  let rec multiply_each (lst : int list) (element : int): int list = 
+    match lst with
+    | [] -> []
+    | hd :: [] -> [hd * element]
+    | hd :: tl -> 
+      (hd * element) * (raise_to_power (List.length tl)) 
+      :: multiply_each tl element
+  in 
+    let product = List.flatten(List.map (fun x ->  multiply_each b1.coeffs x) b2.coeffs) 
+  in
+    let result = List.fold_left (fun x y -> plus x y) {neg = false; coeffs = []} (convert_to_bignum product) 
+  in 
+    {neg = ( <> ) b1.neg b2.neg; coeffs = result.coeffs} 
+;;
 
 (*======================================================================
 Challenge Problem 6: Faster bignum multiplication 
@@ -345,8 +364,7 @@ Please give us an honest (if approximate) estimate of how long (in
 minutes) this problem set took you to complete. 
 ......................................................................*)
 
-let minutes_spent_on_pset () : int =
-  failwith "time estimate not provided" ;;
+let minutes_spent_on_pset () : int = 540 ;;
 
 (*......................................................................
 It's worth reflecting on the work you did on this problem set. Where
@@ -358,4 +376,6 @@ below.
 ......................................................................*)
 
 let reflection () : string =
-  "...your reflections here..." ;;
+  "It is part of the learning process but I struggled a lot \
+with this assignment. Office hours were super helpful. I will \
+try to practice more exercises in the future" ;;
