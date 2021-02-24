@@ -319,8 +319,9 @@ simplifies the code, as long as the invariant is preserved.
 (* times b1 b2 -- Returns the bignum product of `b1` and `b2` *)
 
 let times (b1 : bignum) (b2 : bignum) : bignum =
-  let raise_to_power (power : int) : int = 
-    int_of_float (float_of_int cBASE ** float_of_int power) 
+  let rec add_zeros (num : int) (power : int) : int =
+    if power = 0 then num 
+    else cBASE * (add_zeros num (power - 1)) 
   in
   let rec convert_to_bignum (lst : int list) : bignum list =
     match lst with
@@ -332,12 +333,11 @@ let times (b1 : bignum) (b2 : bignum) : bignum =
     | [] -> []
     | hd :: [] -> [hd * element]
     | hd :: tl -> 
-      (hd * element) * (raise_to_power (List.length tl)) 
-      :: multiply_each tl element
+      add_zeros (hd * element) (List.length tl) :: multiply_each tl element
   in 
-    let product = List.flatten(List.map (fun x ->  multiply_each b1.coeffs x) b2.coeffs) 
+  let product = List.flatten(List.map (fun x ->  multiply_each b1.coeffs x) b2.coeffs) 
   in
-    let result = List.fold_left (fun x y -> plus x y) {neg = false; coeffs = []} (convert_to_bignum product) 
+  let result = List.fold_left (fun x y -> plus x y) {neg = false; coeffs = []} (convert_to_bignum product) 
   in 
     {neg = ( <> ) b1.neg b2.neg; coeffs = result.coeffs} 
 ;;
