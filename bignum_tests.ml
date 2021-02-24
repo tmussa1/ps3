@@ -4,7 +4,6 @@
  *)
 
 open Bignum ;;
-open Test_simple ;; 
 open CS51Utils ;;
 open Absbook ;;
    
