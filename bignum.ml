@@ -60,6 +60,10 @@ let equal (b1 : bignum) (b2 : bignum) : bool = b1 = b2 ;;
 
 (* less b1 b2 -- Predicate returns `true` if and only if `b1`
    represents a smaller number than `b2`. *)
+
+(** A negative number is always less than a postive number
+    For two positive lists, the list with the greater number of elements is greater
+*)
 let less (b1 : bignum) (b2 : bignum) : bool =
   if (equal b1 b2) || (not b1.neg && b2.neg) then false
   else if 
@@ -79,6 +83,8 @@ let less (b1 : bignum) (b2 : bignum) : bool =
 
 (* greater b1 b2 -- Predicate returns `true` if and only if `b1`
    represents a larger number than `b2`. *)
+
+(** Opposite truth table of less except when the two bignums are equal *)
 let greater (b1 : bignum) (b2 : bignum) : bool = 
   not (equal b1 b2) && not (less b1 b2) ;;
 
@@ -88,6 +94,7 @@ Problem 3: Converting to and from bignums
 
 (* from_int n -- Returns a bignum representing the integer `n`. *)
 
+(** Leverages mod to obtain successive coefficients *)
 let from_int (n : int) : bignum =
   let rec converter (n : int) : int list =
     if (n / cBASE) = 0 then n :: [] 
@@ -99,6 +106,7 @@ let from_int (n : int) : bignum =
    the bignum `b`, if possible, or `None` if `b` represents an integer
    out of the representable range of the `int` type. *)
 
+(** Leverages fold_left to accumulate sum over the base *)
 let to_int (b : bignum) : int option =
   let overflow = 
     greater b (from_int (abs (min_int + 1)))
@@ -107,10 +115,6 @@ let to_int (b : bignum) : int option =
   if overflow then None
   else 
     Some (List.fold_left (fun x y -> x * cBASE + y) 0 b.coeffs) ;;
-(*     
-    match to_int_helper b.coeffs with 
-      | None -> None 
-      | Some x -> if b.neg && x <> 0 then Some(~-x) else Some (x);; *)
 
 (*======================================================================
   Helpful functions (not to be used in problems 1 to 3)
@@ -278,6 +282,8 @@ Hint: How can you use `plus_pos` to implement `plus`? Make sure that
 your implementation preserves the bignum invariant.
 ......................................................................*)
 
+(** Summing the negation of two numbers give same the same absolute value 
+as adding them *)
 let plus (b1 : bignum) (b2 : bignum) : bignum =
   let sum_negative = 
     (greater b1 b2 && b1.neg) 
@@ -319,6 +325,10 @@ simplifies the code, as long as the invariant is preserved.
 
 (* times b1 b2 -- Returns the bignum product of `b1` and `b2` *)
 
+(** Multiplies each element of list 1 by each element of list 2.
+The resultant is summed across. Converting intermediate results to string
+to handle very large numbers
+*)
 let times (b1 : bignum) (b2 : bignum) : bignum =
   let rec add_zeros (num : int) (power : int) : string =
     if power = 0 then string_of_int num 
