@@ -114,7 +114,10 @@ let to_int (b : bignum) : int option =
   in
   if overflow then None
   else 
-    Some (List.fold_left (fun x y -> x * cBASE + y) 0 b.coeffs) ;;
+    let result = 
+      List.fold_left (fun x y -> x * cBASE + y) 0 b.coeffs 
+    in 
+    if b.neg then Some (~-result) else Some (result);;
 
 (*======================================================================
   Helpful functions (not to be used in problems 1 to 3)
