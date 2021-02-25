@@ -40,7 +40,8 @@ Problem 1: Negation
 ......................................................................*)
 
 (* negate b -- Returns a `bignum` that is the negation of `b`. *) 
-let negate (b : bignum) : bignum = {neg = not b.neg; coeffs = b.coeffs} ;;
+let negate (b : bignum) : bignum = 
+  {neg = not b.neg; coeffs = b.coeffs} ;;
 
 (*......................................................................
 Problem 2: Comparing bignums
@@ -68,12 +69,12 @@ let less (b1 : bignum) (b2 : bignum) : bool =
   else 
     let rec less_rec (lst1 : int list) (lst2 : int list) : bool = 
       match lst1, lst2 with
-        | [], [] | _ , [] -> false
-        | [], _ -> true 
-        | hd1 :: tl1, hd2 :: tl2 -> 
-          if hd1 = hd2 then less_rec tl1 tl2 
-          else if hd1 < hd2 then true
-          else false
+      | [], [] | _ , [] -> false
+      | [], _ -> true 
+      | hd1 :: tl1, hd2 :: tl2 -> 
+        if hd1 = hd2 then less_rec tl1 tl2 
+        else if hd1 < hd2 then true
+        else false
     in less_rec b1.coeffs b2.coeffs ;;
 
 (* greater b1 b2 -- Predicate returns `true` if and only if `b1`
@@ -330,11 +331,14 @@ let times (b1 : bignum) (b2 : bignum) : bignum =
     | hd :: tl -> 
       add_zeros (hd * element) (intlog cBASE * List.length tl) :: multiply_each tl element
   in 
-  let product = List.flatten (List.map (fun x -> multiply_each b1.coeffs x) b2.coeffs)
+  let product = 
+    List.flatten (List.map (fun x -> multiply_each b1.coeffs x) b2.coeffs)
   in 
-  let lst : bignum list = List.map (fun str -> from_string str) product 
+  let lst : bignum list = 
+    List.map (fun str -> from_string str) product 
   in
-  let result = List.fold_left (fun x y -> plus x y) {neg = false; coeffs = []} lst
+  let result = 
+    List.fold_left (fun x y -> plus x y) {neg = false; coeffs = []} lst
   in 
   {neg = ( <> ) b1.neg b2.neg; coeffs = result.coeffs} 
 ;;
@@ -349,7 +353,7 @@ Challenge Problem 6: Faster bignum multiplication
    multiplication. *)
 
 (* Not implemented this. Just made the compilation error go away *)
-let times_faster (b1 : bignum) (b2 : bignum) : bignum =
+let times_faster (b1 : bignum) (b2 : bignum) : bignum = 
   times b1 b2 ;;
 
 (*======================================================================
